@@ -1,0 +1,33 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mcp-oauth-gateway",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Step 3: the Go MCP server, built from ./Dockerfile and run as a container
+  // that is controlled by the McpContainer Durable Object class.
+  "containers": [
+    {
+      "class_name": "McpContainer",
+      "image": "./Dockerfile",
+      "max_instances": 5
+    }
+  ],
+  "durable_objects": {
+    "bindings": [{ "name": "MCP_CONTAINER", "class_name": "McpContainer" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["McpContainer"] }],
+
+  // Step 2: OAuthProvider keeps clients, grants and tokens in this KV namespace.
+  // Create it with `npx wrangler kv namespace create OAUTH_KV` and paste the id.
+  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "REPLACE_WITH_KV_NAMESPACE_ID" }],
+
+  // Non-secret settings. Secrets (GITHUB_CLIENT_SECRET, COOKIE_SECRET) are set
+  // with `npx wrangler secret put <NAME>`.
+  "vars": {
+    "GITHUB_CLIENT_ID": "REPLACE_WITH_GITHUB_OAUTH_APP_CLIENT_ID",
+    // Comma-separated GitHub logins allowed to sign in.
+    "ALLOWED_GITHUB_USERS": "your-github-login"
+  }
+}
